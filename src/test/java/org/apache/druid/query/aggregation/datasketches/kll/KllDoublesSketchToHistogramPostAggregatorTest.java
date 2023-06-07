@@ -21,6 +21,8 @@ package org.apache.druid.query.aggregation.datasketches.kll;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.apache.datasketches.kll.KllDoublesSketch;
+import org.apache.datasketches.quantiles.DoublesSketch;
 import org.apache.druid.jackson.DefaultObjectMapper;
 import org.apache.druid.java.util.common.IAE;
 import org.apache.druid.java.util.common.granularity.Granularities;
@@ -28,6 +30,9 @@ import org.apache.druid.query.Druids;
 import org.apache.druid.query.aggregation.Aggregator;
 import org.apache.druid.query.aggregation.PostAggregator;
 import org.apache.druid.query.aggregation.TestDoubleColumnSelectorImpl;
+import org.apache.druid.query.aggregation.datasketches.quantiles.DoublesSketchBuildAggregator;
+import org.apache.druid.query.aggregation.datasketches.quantiles.DoublesSketchOperations;
+import org.apache.druid.query.aggregation.datasketches.quantiles.DoublesSketchToHistogramPostAggregator;
 import org.apache.druid.query.aggregation.post.FieldAccessPostAggregator;
 import org.apache.druid.query.timeseries.TimeseriesQuery;
 import org.apache.druid.query.timeseries.TimeseriesQueryQueryToolChest;
@@ -40,6 +45,7 @@ import org.junit.rules.ExpectedException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class KllDoublesSketchToHistogramPostAggregatorTest
 {
@@ -185,6 +191,35 @@ public class KllDoublesSketchToHistogramPostAggregatorTest
     Assert.assertEquals(2, histogram.length);
     Assert.assertEquals(3.0, histogram[0], 0);
     Assert.assertEquals(3.0, histogram[1], 0);
+  }
+
+  @Test
+  public void moreThan50Bins()
+  {
+    final double[] values = IntStream.range(0, 100).mapToDouble(value -> value).toArray();
+    final TestDoubleColumnSelectorImpl selector = new TestDoubleColumnSelectorImpl(values);
+
+    final Aggregator agg = new KllDoublesSketchBuildAggregator(selector, 32768);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < values.length; i++) {
+      agg.aggregate();
+      selector.increment();
+    }
+
+    KllDoublesSketch sketch = KllDoublesSketchOperations.deserialize(((KllDoublesSketch) agg.get()).toByteArray());
+    final Map<String, Object> fields = new HashMap<>();
+    fields.put("sketch", sketch);
+
+    final PostAggregator postAgg = new KllDoublesSketchToHistogramPostAggregator(
+        "histogram",
+        new FieldAccessPostAggregator("field", "sketch"),
+        null,
+        60 // 60 bins of equal mass
+    );
+
+    final double[] histogram = (double[]) postAgg.compute(fields);
+    Assert.assertNotNull(histogram);
+    Assert.assertEquals(60, histogram.length);
   }
 
   @Test
