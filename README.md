@@ -71,3 +71,18 @@ Since the sorting is no longer an issiue in the new 4.0.0 release of the DataSke
 
 This repository contains a compiled jar extension with fix, that can be used for quickly swap the broken jar for Druid versions: 25.0.0 and 26.0.0.
 
+## Docker Build
+
+Build and push image with:
+```bash
+docker build . -t deepbi/druid:25.0.0-patch1
+docker tag deepbi/druid:25.0.0-patch1 deepbi/druid:latest
+
+docker push deepbi/druid:25.0.0-patch1
+docker push deepbi/druid:latest
+```
+
+You need to login to docker hub first:
+```bash
+docker login
+```
