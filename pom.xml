@@ -38,6 +38,10 @@
     <version>25.0.0</version>
   </parent>
 
+  <properties>
+    <project.parent.basedir>.</project.parent.basedir>
+  </properties>
+
   <repositories>
     <repository>
       <id>maven.org</id>
@@ -252,6 +256,28 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>process-resource-bundles</id>
+            <goals>
+              <goal>process</goal>
+            </goals>
+            <configuration>
+              <properties>
+                <projectName>Apache Druid</projectName>
+              </properties>
+              <resourceBundles>
+                <resourceBundle>org.apache.apache.resources:apache-jar-resource-bundle:1.5</resourceBundle>
+              </resourceBundles>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
