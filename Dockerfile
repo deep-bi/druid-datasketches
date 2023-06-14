@@ -3,5 +3,5 @@ COPY . /app
 WORKDIR /app
 RUN mvn clean package
 
-FROM apache/druid:25.0.0 AS druid
-COPY --from=maven /app/target/druid-datasketches-25.0.0.jar /opt/druid/extensions/druid-datasketches/.
+FROM apache/druid:26.0.0 AS druid
+COPY --from=maven /app/target/druid-datasketches-26.0.0.jar /opt/druid/extensions/druid-datasketches/.
